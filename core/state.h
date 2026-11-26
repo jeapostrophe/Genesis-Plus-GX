@@ -42,6 +42,9 @@
 #define STATE_SIZE    0xfd000
 #define STATE_VERSION "GENPLUS-GX 1.7.6"
 
+/* marks the 68k bus refresh counter kept after the cartridge hardware */
+#define STATE_REFRESH_TAG "RFSH"
+
 #define load_param(param, size) \
   memcpy(param, &state[bufferptr], size); \
   bufferptr+= size;

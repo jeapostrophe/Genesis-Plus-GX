@@ -192,6 +192,16 @@ int state_load(unsigned char *state)
     sms_cart_switch(~io_reg[0x0E]);
   }
 
+  /* 68k bus refresh counter: without it the reset above leaves the counter at its power-on  */
+  /* value, most of a frame ahead, and the loaded 68k runs that long with no refresh delays. */
+  /* A state saved before the counter was kept has no tag and loads as it always did.        */
+  if (((system_hw & SYSTEM_PBC) == SYSTEM_MD) && (bufferptr + 8 <= STATE_SIZE) &&
+      !memcmp(&state[bufferptr], STATE_REFRESH_TAG, 4))
+  {
+    bufferptr += 4;
+    load_param(&m68k.refresh_cycles, sizeof(m68k.refresh_cycles));
+  }
+
   return bufferptr;
 }
 
@@ -281,6 +291,13 @@ int state_save(unsigned char *state)
   {
     /* MS cartridge hardware */
     bufferptr += sms_cart_context_save(&state[bufferptr]);
+  }
+
+  /* 68k bus refresh counter (tagged, after everything an older state holds) */
+  if (((system_hw & SYSTEM_PBC) == SYSTEM_MD) && (bufferptr + 8 <= STATE_SIZE))
+  {
+    save_param(STATE_REFRESH_TAG, 4);
+    save_param(&m68k.refresh_cycles, sizeof(m68k.refresh_cycles));
   }
 
   /* return total size */
